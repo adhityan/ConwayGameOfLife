@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace ConwayGameOfLife
 {
@@ -115,13 +113,13 @@ namespace ConwayGameOfLife
 
 		public void nextIteration()
 		{
-			var shadow = DeepClone<bool[][]>(state);
+			var shadow = deepClone();
 
 			for (int i = 0; i < state.Length; i++)
 			{
 				for (int j = 0; j < state[i].Length; j++)
 				{
-					var whatIsNext = whatHappensToThisCell(new Tuple<int, int>(i, j));
+					var whatIsNext = whatHappensToThisCell(new KeyValuePair<int, int>(i, j));
 					switch (whatIsNext)
 					{
 						case evolution.BIRTH:
@@ -144,7 +142,7 @@ namespace ConwayGameOfLife
 			}
 		}
 
-		public evolution whatHappensToThisCell(Tuple<int, int> current)
+		public evolution whatHappensToThisCell(KeyValuePair<int, int> current)
 		{
 			bool alive = isCellAlive(current);
 			int neighbours = getNeighbourCount(current);
@@ -173,7 +171,7 @@ namespace ConwayGameOfLife
 			else return false;
 		}
 
-		public int getNeighbourCount(Tuple<int, int> current) {
+		public int getNeighbourCount(KeyValuePair<int, int> current) {
 			int count = 0;
 			if (isCellAlive(getLeft(current))) count++;
 			if (isCellAlive(getRight(current))) count++;
@@ -186,67 +184,69 @@ namespace ConwayGameOfLife
 			return count;
 		}
 
-		public bool isCellAlive(Tuple<int, int> current)
+		public bool isCellAlive(KeyValuePair<int, int> current)
 		{
-			return state[current.Item1][current.Item2];
+			return state[current.Key][current.Value];
 		}
 
-		public Tuple<int, int> getLeft(Tuple<int, int> current)
+		public KeyValuePair<int, int> getLeft(KeyValuePair<int, int> current)
 		{
-			if (current.Item2 > 0) return new Tuple<int, int>(current.Item1, current.Item2 - 1);
-			else return new Tuple<int, int>(current.Item1, state.First().Length - 1);
+			if (current.Value > 0) return new KeyValuePair<int, int>(current.Key, current.Value - 1);
+			else return new KeyValuePair<int, int>(current.Key, state.First().Length - 1);
 		}
 
-		public Tuple<int, int> getRight(Tuple<int, int> current)
+		public KeyValuePair<int, int> getRight(KeyValuePair<int, int> current)
 		{
-			if (current.Item2 < state.First().Length - 1) return new Tuple<int, int>(current.Item1, current.Item2 + 1);
-			else return new Tuple<int, int>(current.Item1, 0);
+			if (current.Value < state.First().Length - 1) return new KeyValuePair<int, int>(current.Key, current.Value + 1);
+			else return new KeyValuePair<int, int>(current.Key, 0);
 		}
 
-		public Tuple<int, int> getTop(Tuple<int, int> current)
+		public KeyValuePair<int, int> getTop(KeyValuePair<int, int> current)
 		{
-			if (current.Item1 > 0) return new Tuple<int, int>(current.Item1 - 1, current.Item2);
-			else return new Tuple<int, int>(state.Length - 1, current.Item2);
+			if (current.Key > 0) return new KeyValuePair<int, int>(current.Key - 1, current.Value);
+			else return new KeyValuePair<int, int>(state.Length - 1, current.Value);
 		}
 
-		public Tuple<int, int> getBottom(Tuple<int, int> current)
+		public KeyValuePair<int, int> getBottom(KeyValuePair<int, int> current)
 		{
-			if (current.Item1 < state.Length - 1) return new Tuple<int, int>(current.Item1 + 1, current.Item2);
-			else return new Tuple<int, int>(0, current.Item2);
+			if (current.Key < state.Length - 1) return new KeyValuePair<int, int>(current.Key + 1, current.Value);
+			else return new KeyValuePair<int, int>(0, current.Value);
 		}
 
-		public Tuple<int, int> getBottomLeft(Tuple<int, int> current)
+		public KeyValuePair<int, int> getBottomLeft(KeyValuePair<int, int> current)
 		{
 			return getBottom(getLeft(current));
 		}
 
-		public Tuple<int, int> getBottomRight(Tuple<int, int> current)
+		public KeyValuePair<int, int> getBottomRight(KeyValuePair<int, int> current)
 		{
 			return getBottom(getRight(current));
 		}
 
-		public Tuple<int, int> getTopLeft(Tuple<int, int> current)
+		public KeyValuePair<int, int> getTopLeft(KeyValuePair<int, int> current)
 		{
 			return getTop(getLeft(current));
 		}
 
-		public Tuple<int, int> getTopRight(Tuple<int, int> current)
+		public KeyValuePair<int, int> getTopRight(KeyValuePair<int, int> current)
 		{
 			return getTop(getRight(current));
 		}
 
 		public enum evolution { DEATH, BIRTH, SURVIVE, INERT };
 
-		public static T DeepClone<T>(T obj)
+		public bool[][] deepClone()
 		{
-			using (var ms = new MemoryStream())
+			bool[][] shadow = new bool[state.Length][];
+			for (int i = 0; i < state.Length; i++)
 			{
-				var formatter = new BinaryFormatter();
-				formatter.Serialize(ms, obj);
-				ms.Position = 0;
-
-				return (T)formatter.Deserialize(ms);
+				shadow[i] = new bool[state[i].Length];
+				for (int j = 0; j < state[i].Length; j++)
+				{
+					shadow[i][j] = state[i][j];
+				}
 			}
+			return shadow;
 		}
 
 		public override string ToString() 
